@@ -1,0 +1,97 @@
+{
+    "project_info": {
+      "project_number": "978153274765",
+      "project_id": "react-native-demo-393a2",
+      "storage_bucket": "react-native-demo-393a2.appspot.com"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:978153274765:android:58d092c72a1ce4042191c4",
+          "android_client_info": {
+            "package_name": "com.call.trigger"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "978153274765-t77inunp22u9gg4r413hnt2r7o46n035.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyB30zkJ93qSVfLLqiorqk1z6OMDpiu0Xl8"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "978153274765-t77inunp22u9gg4r413hnt2r7o46n035.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      },
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:978153274765:android:926d8e84557d58762191c4",
+          "android_client_info": {
+            "package_name": "com.ifonix"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "978153274765-t77inunp22u9gg4r413hnt2r7o46n035.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyB30zkJ93qSVfLLqiorqk1z6OMDpiu0Xl8"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "978153274765-t77inunp22u9gg4r413hnt2r7o46n035.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      },
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:978153274765:android:cc7bc7d52d21385a2191c4",
+          "android_client_info": {
+            "package_name": "com.ifonixcall"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "978153274765-t77inunp22u9gg4r413hnt2r7o46n035.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyB30zkJ93qSVfLLqiorqk1z6OMDpiu0Xl8"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "978153274765-t77inunp22u9gg4r413hnt2r7o46n035.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }
