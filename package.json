@@ -10,15 +10,18 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^1.18.1",
     "@react-native-firebase/app": "^17.4.3",
     "@react-native-firebase/firestore": "^17.4.3",
     "@react-native-firebase/messaging": "^17.4.3",
     "@react-navigation/native": "^6.1.6",
     "@react-navigation/stack": "^6.3.16",
     "firebase": "^9.21.0",
+    "i": "^0.3.7",
     "lottie-ios": "^4.2.0",
     "lottie-react-native": "^5.1.5",
     "moment": "^2.29.4",
+    "npm": "^9.6.6",
     "react": "18.2.0",
     "react-native": "0.71.7",
     "react-native-callkeep": "github:react-native-webrtc/react-native-callkeep#4b1fa98a685f6502d151875138b7c81baf1ec680",
@@ -32,7 +35,8 @@
     "react-native-toast-message": "^2.1.6",
     "react-native-uuid": "^2.0.1",
     "react-native-voip-push-notification": "^3.3.1",
-    "react-native-voximplant": "^1.36.0"
+    "react-native-voximplant": "^1.36.0",
+    "react-query": "^3.39.3"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

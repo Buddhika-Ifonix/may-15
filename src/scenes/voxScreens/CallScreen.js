@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation,} from '@react-navigation/native';
 import React, {useState, useRef, useCallback, useEffect} from 'react';
 import {
   Alert,
@@ -22,6 +22,16 @@ const CallScreen = ({route}) => {
   const [localVideoStreamId, setLocalVideoStreamId] = useState('');
   const [remoteVideoStreamId, setRemoteVideoStreamId] = useState('');
   const voximplant = Voximplant.getInstance();
+
+  // useEffect(() => {
+  //   // Add the 'beforeRemove' event listener
+  //   const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+  //     e.preventDefault();
+  //   });
+  
+  //   // Cleanup the event listener on unmount
+  //   return unsubscribe;
+  // }, []);
 
   useEffect(() => {
     // Voximplant.Hardware.AudioDeviceManager.setUseLoudspeaker(true);
@@ -118,8 +128,15 @@ const CallScreen = ({route}) => {
     call.hangup();
   }, []);
 
-  const consFun = () => {
- console.log(voximplant.Hardware.AudioDeviceManager.setUseLoudspeaker(true))
+
+const testtest = async() => {
+  let devices =
+  await Voximplant.Hardware.AudioDeviceManager.getInstance().getAudioDevices();
+  console.log(devices)
+Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
+  devices[1],
+);
+
 }
 
   return (
@@ -139,15 +156,15 @@ const CallScreen = ({route}) => {
             showOnTop={true}
           />
         </View>
-        <View style={styles.callControlsVideo}>
+        
           <Text style={styles.callConnectingLabel}>{callState}</Text>
           <TouchableOpacity onPress={() => endCall()} style={styles.button}>
             <Text style={styles.textButton}>END CALL</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity onPress={() => consFun()} style={styles.button}>
-            <Text style={styles.textButton}>END CALL</Text>
-          </TouchableOpacity> */}
-        </View>
+          <TouchableOpacity onPress={() => testtest()}  style={styles.button}>
+            <Text style={styles.textButton}>speaker</Text>
+          </TouchableOpacity>
+      
       </SafeAreaView>
     </>
   );

@@ -9,23 +9,64 @@ import {
   View,
   Alert,
   PermissionsAndroid,
+  ActivityIndicator,
 } from 'react-native';
 import styles from './Styles';
 import {Voximplant} from 'react-native-voximplant';
 import {VOXIMPLANT_ACCOUNT, VOXIMPLANT_APP} from './Constants';
 import { SCREEN_NAMES } from "../../navigators/screenNames";
+import { useMutation, useQueryClient } from 'react-query';
+import { loginData } from '../../api/api';
+import useLoginstatus from '../../hooks/useLoginstatus';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
   const voximplant = Voximplant.getInstance();
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+
+
+  const queryClient = useQueryClient();
+
+  const loginMutaion = useMutation(loginData, {
+    onSuccess: (data) => {
+      queryClient.setQueryData('login', data);
+    },
+
+    onError: error => {
+      console.log(error);
+    },
+  });
+
+
+
+  // const clientCheck = async() => {
+
+  //   const state=  await voximplant.getClientState();
+  //   const loginData = await useLoginstatus()
+  //   console.log(loginData);
+    
+  //   if( loginData){
+  //     navigation.navigate(SCREEN_NAMES.Home);
+  //   }else{
+  //     console.log('no')
+  //   }
+  // }
+
+                                   
+  useEffect(() => {
+    // loginMutaion.mutate({user, password});
+  
+  },[])
 
 
   async function login() {
+    setLoading(true)
     // PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
     try {
       let clientState = await voximplant.getClientState();
+
       if (clientState === Voximplant.ClientState.DISCONNECTED) {
         await voximplant.connect();
         await voximplant.login(
@@ -33,14 +74,24 @@ const LoginScreen = () => {
           password,
         );
       }
+ 
+
+  
       if (clientState === Voximplant.ClientState.CONNECTED) {
         await voximplant.login(
           `${user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
           password,
         );
       }
-      navigation.navigate(SCREEN_NAMES.Home);
+   
+       setLoading(false);
+       loginMutaion.mutate({user, password});
+        navigation.navigate(SCREEN_NAMES.Home);
+   
+    
+    
     } catch (e) {
+      setLoading(false);
       let message;
       switch (e.name) {
         case Voximplant.ClientEvents.ConnectionFailed:
@@ -76,6 +127,15 @@ const LoginScreen = () => {
       },
     ]);
   }
+
+if(loading){
+  
+ return (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+  <ActivityIndicator size="large" />
+</View>
+ )
+}
 
   return (
     <>

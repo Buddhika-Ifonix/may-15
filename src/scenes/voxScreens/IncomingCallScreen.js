@@ -19,6 +19,14 @@ const IncomingCallScreen = ({route}) => {
   console.log(route.params)
   const {callId} = route.params;
   const [caller, setCaller] = useState('Unknown');
+  // useEffect(
+  //   () =>
+  //     navigation.addListener('beforeRemove', (e) => {
+  //       e.preventDefault();
+  
+  //     }),
+  //   []
+  // );
 
   useEffect(() => {
     let call = calls.get(callId);

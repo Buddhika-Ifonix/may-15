@@ -1,9 +1,18 @@
-const API_BASE_URL = "https://api.videosdk.live/v2";
-const VIDEOSDK_TOKEN = '32030093-af1e-4f07-841b-3f27468d8c7e'
-// "http://192.168.1.12:9000";
-const FCM_SERVER_URL =
-"http://192.168.8.152:9000";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const FCM_SERVER_URL =
+"https://call-api-production.up.railway.app";
+
+
+
+export const loginData = async (data) => {
+
+
+  const jsonValue = JSON.stringify(data)
+  await AsyncStorage.setItem('loginData', jsonValue)
+
+  return data;
+};
 
 
 export const initiateCall = async ({
@@ -21,7 +30,7 @@ export const initiateCall = async ({
     }),
   })
     .then((response) => {
-      // console.log(" RESP", response);
+      console.log(" RESP", response);
     })
     .catch((error) => console.error("error", error));
 };

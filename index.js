@@ -28,7 +28,7 @@ Platform.OS == "android" && StatusBar.setBackgroundColor(colors.primary[900]);
 
 
 const firebaseListener = async (remoteMessage) => {
-  const { callerInfo, videoSDKInfo, type } = JSON.parse(
+  const { callerInfo, type } = JSON.parse(
     remoteMessage.data.info
   );
 

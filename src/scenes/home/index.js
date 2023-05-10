@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, {useEffect, useState, useRef} from 'react';
 import {
   Platform,
   KeyboardAvoidingView,
@@ -7,40 +7,109 @@ import {
   View,
   Text,
   Clipboard,
-
   PermissionsAndroid,
   Alert,
   Linking,
   StyleSheet,
-} from "react-native";
-import { ScrollView, TouchableOpacity } from "react-native-gesture-handler";
-import { CallEnd, Copy } from "../../assets/icons";
-import TextInputContainer from "../../components/TextInputContainer";
-import colors from "../../styles/colors";
-import { ROBOTO_FONTS } from "../../styles/fonts";
-import firestore from "@react-native-firebase/firestore";
-import messaging from "@react-native-firebase/messaging";
-import Toast from "react-native-simple-toast";
+} from 'react-native';
+import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler';
+import {CallEnd, Copy} from '../../assets/icons';
+import TextInputContainer from '../../components/TextInputContainer';
+import colors from '../../styles/colors';
+import {ROBOTO_FONTS} from '../../styles/fonts';
+import firestore from '@react-native-firebase/firestore';
+import messaging from '@react-native-firebase/messaging';
+import Toast from 'react-native-simple-toast';
 import {
   updateCallStatus,
   initiateCall,
   getToken,
   createMeeting,
-} from "../../api/api";
-import { SCREEN_NAMES } from "../../navigators/screenNames";
-import Incomingvideocall from "../../utils/incoming-video-call";
-import VoipPushNotification from "react-native-voip-push-notification";
+} from '../../api/api';
+import {SCREEN_NAMES} from '../../navigators/screenNames';
+import Incomingvideocall from '../../utils/incoming-video-call';
+import VoipPushNotification from 'react-native-voip-push-notification';
 import calls from '../voxScreens/Store';
 import {Voximplant} from 'react-native-voximplant';
 
-export default function Home({ navigation }) {
-  const [number, setNumber] = useState("");
+import {VOXIMPLANT_ACCOUNT, VOXIMPLANT_APP} from '../voxScreens/Constants';
+import useLoginstatus from '../../hooks/useLoginstatus';
+import useLogout from '../../hooks/useLogout';
+
+export default function Home({navigation}) {
+  const [userInfo, setUserInfo] = useState({});
+
+  const clientCheck = async () => {
+    const loginData = await useLoginstatus();
+    const state = await voximplant.getClientState();
+
+    if (loginData) {
+      console.log('');
+    } else {
+      navigation.navigate(SCREEN_NAMES.Login);
+    }
+  };
+
+  useEffect(() => {
+    clientCheck();
+  }, []);
+
+  function showLoginError(message) {
+    Alert.alert('Login error', message, [
+      {
+        text: 'OK',
+      },
+    ]);
+  }
+
+  // useEffect(() => {
+  //   async function login() {
+  //     const loginData = await useLoginstatus();
+
+  //     // PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+  //     if (loginData?.user) {
+  //       try {
+  //         let clientState = await voximplant.getClientState();
+  //         if (clientState === Voximplant.ClientState.DISCONNECTED) {
+  //           await voximplant.connect();
+  //           await voximplant.login(
+  //             `${loginData.user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
+  //             loginData.password,
+  //           );
+  //         }
+  //         if (clientState === Voximplant.ClientState.CONNECTED) {
+  //           await voximplant.login(
+  //             `${loginData.user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
+  //             loginData.password,
+  //           );
+  //         }
+  //       } catch (e) {
+  //         let message;
+  //         switch (e.name) {
+  //           case Voximplant.ClientEvents.ConnectionFailed:
+  //             message = 'Connection error, check your internet connection';
+  //             break;
+  //           case Voximplant.ClientEvents.AuthResult:
+  //             message = convertCodeMessage(e.code);
+  //             break;
+  //           default:
+  //             message = 'Unknown error. Try again';
+  //         }
+  //         showLoginError(message);
+  //       }
+  //     }
+  //   }
+
+  //   login();
+  // }, []);
+
+  const [number, setNumber] = useState('');
   const [names, setNames] = useState([
-    { id: '1', name: 'tinith',callerId:'60018634' },
-    { id: '2', name: 'umanda',callerId:'96701489' },
-    { id: '3', name: 'Charlie' },
-    { id: '4', name: 'David' },
-    { id: '5', name: 'Eve' },
+    {id: '1', name: 'tinith', callerId: 'tinith'},
+    {id: '2', name: 'umanda', callerId: 'umanda'},
+    {id: '3', name: 'Charlie'},
+    {id: '4', name: 'David'},
+    {id: '5', name: 'Eve'},
   ]);
   const [firebaseUserConfig, setfirebaseUserConfig] = useState(null);
   const [isCalling, setisCalling] = useState(false);
@@ -51,54 +120,52 @@ export default function Home({ navigation }) {
 
   APNRef.current = APN;
 
- 
   const [callee, setCallee] = useState('');
   const voximplant = Voximplant.getInstance();
 
   useEffect(() => {
+    console.log('he ');
     async function getFCMtoken() {
+      console.log('ya ');
       const authStatus = await messaging().requestPermission();
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
         authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-      Platform.OS === "ios" && VoipPushNotification.registerVoipToken();
+      Platform.OS === 'ios' && VoipPushNotification.registerVoipToken();
 
       if (enabled) {
         const token = await messaging().getToken();
         const querySnapshot = await firestore()
-          .collection("users")
-          .where("token", "==", token)
+          .collection('users')
+          .where('token', '==', token)
           .get();
 
-        const uids = querySnapshot.docs.map((doc) => {
+        const uids = querySnapshot.docs.map(doc => {
           if (doc && doc?.data()?.callerId) {
-           
-            const { token, platform, APN, callerId } = doc?.data();
+            const {token, platform, APN, callerId} = doc?.data();
             setfirebaseUserConfig({
               callerId,
               token,
               platform,
               APN,
-              // claller: 'caller buwa'
             });
           }
           return doc;
         });
 
+        console.log('out');
+        console.log(uids);
         if (uids && uids.length == 0) {
-          addUser({ token });
+          console.log('in');
+          addUser({token});
         } else {
-          console.log("Token Found");
+          console.log('Token Found');
         }
       }
     }
 
-   
     getFCMtoken();
-  
-   
   }, []);
-
 
   ///vox configuration
   useEffect(() => {
@@ -113,7 +180,7 @@ export default function Home({ navigation }) {
     };
   });
 
-  async function makeCall({isVideoCall,name}) {
+  async function makeCall({isVideoCall, name}) {
     try {
       if (Platform.OS === 'android') {
         let permissions = [PermissionsAndroid.PERMISSIONS.RECORD_AUDIO];
@@ -139,65 +206,60 @@ export default function Home({ navigation }) {
           return;
         }
       }
-   
+
       navigation.navigate(SCREEN_NAMES.Call, {
         isVideoCall: isVideoCall,
         callee: name,
         isIncomingCall: false,
       });
 
-      const navfunc = () => {
-        
-      }
+      const navfunc = () => {};
     } catch (e) {
       console.warn(`MainScreen: makeCall failed: ${e}`);
     }
   }
 
-///vox configuration
+  ///vox configuration
   useEffect(() => {
-    const unsubscribe = messaging().onMessage((remoteMessage) => {
-      const { callerInfo, type } = JSON.parse(
-        remoteMessage.data.info
-      );
-      console.log(callerInfo)
+    const unsubscribe = messaging().onMessage(remoteMessage => {
+      const {callerInfo, type} = JSON.parse(remoteMessage.data.info);
+      console.log(callerInfo);
       switch (type) {
-        case "CALL_INITIATED":
-          const incomingCallAnswer = ({ callUUID }) => {
+        case 'CALL_INITIATED':
+          const incomingCallAnswer = ({callUUID}) => {
             updateCallStatus({
               callerInfo,
-              type: "ACCEPTED",
+              type: 'ACCEPTED',
             });
             Incomingvideocall.endIncomingcallAnswer(callUUID);
             setisCalling(false);
-           
           };
 
           const endIncomingCall = () => {
             Incomingvideocall.endIncomingcallAnswer();
-            updateCallStatus({ callerInfo, type: "REJECTED" });
+            updateCallStatus({callerInfo, type: 'REJECTED'});
           };
 
           Incomingvideocall.configure(incomingCallAnswer, endIncomingCall);
           Incomingvideocall.displayIncomingCall(callerInfo.name);
 
           break;
-        case "ACCEPTED":
+        case 'ACCEPTED':
           setisCalling(false);
           // navigation.navigate(SCREEN_NAMES.Test);
-          makeCall({isVideoCall: true,name:callerInfo.name});
+          makeCall({isVideoCall: true, name: callerInfo.name});
           break;
-        case "REJECTED":
-          console.log("Call Rejected");
+        case 'REJECTED':
+          console.log('Call Rejected');
           setisCalling(false);
           break;
-        case "DISCONNECT":
-          Platform.OS === "ios"
+        case 'DISCONNECT':
+          Platform.OS === 'ios'
             ? Incomingvideocall.endAllCall()
             : Incomingvideocall.endIncomingcallAnswer();
           break;
         default:
-          console.log("Call Could not placed");
+          console.log('Call Could not placed');
       }
     });
 
@@ -207,46 +269,42 @@ export default function Home({ navigation }) {
   }, []);
 
   useEffect(() => {
-    VoipPushNotification.addEventListener("register", (token) => {
+    VoipPushNotification.addEventListener('register', token => {
       setAPN(token);
     });
 
-    VoipPushNotification.addEventListener("notification", (notification) => {
-      if (type === "CALL_INITIATED") {
-        const incomingCallAnswer = ({ callUUID }) => {
+    VoipPushNotification.addEventListener('notification', notification => {
+      if (type === 'CALL_INITIATED') {
+        const incomingCallAnswer = ({callUUID}) => {
           updateCallStatus({
             callerInfo,
-            type: "ACCEPTED",
+            type: 'ACCEPTED',
           });
-         
         };
         const endIncomingCall = () => {
           Incomingvideocall.endAllCall();
-          updateCallStatus({ callerInfo, type: "REJECTED" });
+          updateCallStatus({callerInfo, type: 'REJECTED'});
         };
         Incomingvideocall.configure(incomingCallAnswer, endIncomingCall);
-      } else if (type === "DISCONNECT") {
+      } else if (type === 'DISCONNECT') {
         Incomingvideocall.endAllCall();
       }
       VoipPushNotification.onVoipNotificationCompleted(notification.uuid);
     });
 
-    VoipPushNotification.addEventListener("didLoadWithEvents", (events) => {
-      const { callerInfo, type } =
-        events.length > 1 && events[1].data;
-      if (type === "CALL_INITIATED") {
-        const incomingCallAnswer = ({ callUUID }) => {
+    VoipPushNotification.addEventListener('didLoadWithEvents', events => {
+      const {callerInfo, type} = events.length > 1 && events[1].data;
+      if (type === 'CALL_INITIATED') {
+        const incomingCallAnswer = ({callUUID}) => {
           updateCallStatus({
             callerInfo,
-            type: "ACCEPTED",
+            type: 'ACCEPTED',
           });
-        
-        
         };
 
         const endIncomingCall = () => {
           Incomingvideocall.endAllCall();
-          updateCallStatus({ callerInfo, type: "REJECTED" });
+          updateCallStatus({callerInfo, type: 'REJECTED'});
         };
 
         Incomingvideocall.configure(incomingCallAnswer, endIncomingCall);
@@ -254,44 +312,70 @@ export default function Home({ navigation }) {
     });
 
     return () => {
-      VoipPushNotification.removeEventListener("didLoadWithEvents");
-      VoipPushNotification.removeEventListener("register");
-      VoipPushNotification.removeEventListener("notification");
+      VoipPushNotification.removeEventListener('didLoadWithEvents');
+      VoipPushNotification.removeEventListener('register');
+      VoipPushNotification.removeEventListener('notification');
     };
   }, []);
 
-  const addUser = ({ token }) => {
-    const platform = Platform.OS === "android" ? "ANDROID" : "iOS";
-    const obj = {
-      callerId: Math.floor(10000000 + Math.random() * 90000000).toString(),
-      token,
-      platform,
-    };
-    if (platform == "iOS") {
-      obj.APN = APNRef.current;
+  const addUser = async ({token}) => {
+    const platform = Platform.OS === 'android' ? 'ANDROID' : 'iOS';
+    const loginData = await useLoginstatus();
+    console.log('loginData');
+    console.log(loginData);
+    if (loginData) {
+      const querySnapshot = await firestore()
+        .collection('users')
+        .where('user', '==', loginData.user)
+        .get();
+
+      const data = querySnapshot.docs.map(doc => doc?.data());
+      console.log(data);
+      if (data && data.length > 0) {
+        querySnapshot.forEach(async doc => {
+          await doc.ref.update({token: token});
+        });
+      } else {
+        const obj = {
+          callerId: loginData.user,
+          token,
+          platform,
+        };
+        if (platform == 'iOS') {
+          obj.APN = APNRef.current;
+        }
+
+        await firestore()
+          .collection('users')
+          .add(obj)
+          .then(() => {
+            setfirebaseUserConfig(obj);
+            console.log('User added!');
+          });
+      }
     }
-    firestore()
-      .collection("users")
-      .add(obj)
-      .then(() => {
-        setfirebaseUserConfig(obj);
-        console.log("User added!");
-      });
   };
 
-  const getCallee = async (num) => {
+  const getCallee = async num => {
     const querySnapshot = await firestore()
-      .collection("users")
-      .where("callerId", "==", num.toString())
+      .collection('users')
+      .where('callerId', '==', num.toString())
       .get();
-    return querySnapshot.docs.map((doc) => {
+    return querySnapshot.docs.map(doc => {
       return doc;
     });
+  };
+
+  const logoutHandler = async () => {
+    await voximplant.disconnect();
+    await useLogout();
+    navigation.navigate(SCREEN_NAMES.Login);
+    console.log('logged out');
   };
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {names.map((name) => (
+        {names.map(name => (
           <TouchableOpacity
             key={name.id}
             style={styles.contact}
@@ -300,10 +384,10 @@ export default function Home({ navigation }) {
                 const data = await getCallee(name.callerId);
                 if (data) {
                   if (data.length === 0) {
-                    console.log("CallerId Does not Match");
+                    console.log('CallerId Does not Match');
                   } else {
-                    console.log("CallerId Match!");
-                    const { token, platform, APN } = data[0]?.data();
+                    console.log('CallerId Match!');
+                    const {token, platform, APN} = data[0]?.data();
                     initiateCall({
                       callerInfo: {
                         name: name.name,
@@ -314,21 +398,21 @@ export default function Home({ navigation }) {
                         platform,
                         APN,
                       },
-                     
                     });
                     setisCalling(true);
                   }
                 }
               } else {
-                console.log("Please provide CallerId");
+                console.log('Please provide CallerId');
               }
-            }}
-          
-          >
+            }}>
             <Text style={styles.contactName}>{name.name}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
+      <TouchableOpacity onPress={logoutHandler}>
+        <Text style={styles.contactName}>LogOut</Text>
+      </TouchableOpacity>
     </View>
   );
 }
