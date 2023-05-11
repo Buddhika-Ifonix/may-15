@@ -10,11 +10,12 @@ import Test from "./src/scenes/Test";
 import Call from "./src/scenes/voxScreens/CallScreen"
 import IncomingCall from "./src/scenes/voxScreens/IncomingCallScreen"
 import LoginScreen from "./src/scenes/voxScreens/LoginScreen";
+
 import RNCallKeep from "react-native-callkeep";
-import { QueryClient, QueryClientProvider } from "react-query";
+LogBox.ignoreLogs(["Warning: ..."]);
+LogBox.ignoreAllLogs();
+import messaging from "@react-native-firebase/messaging";
 
-
-const queryClient = new QueryClient();
 const { Navigator, Screen } = createStackNavigator();
 
 
@@ -43,7 +44,6 @@ export default function App() {
 
   return (
     <NavigationContainer fallback={<Text>Loading...</Text>}>
-       <QueryClientProvider client={queryClient}>
       <Navigator
         screenOptions={{
           animationEnabled: false,
@@ -80,7 +80,6 @@ export default function App() {
         />
         
       </Navigator>
-      </QueryClientProvider>
     </NavigationContainer>
   );
 }

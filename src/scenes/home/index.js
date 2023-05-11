@@ -31,12 +31,31 @@ import Incomingvideocall from '../../utils/incoming-video-call';
 import VoipPushNotification from 'react-native-voip-push-notification';
 import calls from '../voxScreens/Store';
 import {Voximplant} from 'react-native-voximplant';
-
-import {VOXIMPLANT_ACCOUNT, VOXIMPLANT_APP} from '../voxScreens/Constants';
-import useLoginstatus from '../../hooks/useLoginstatus';
 import useLogout from '../../hooks/useLogout';
+import useLoginstatus from '../../hooks/useLoginstatus';
 
 export default function Home({navigation}) {
+  const [number, setNumber] = useState('');
+  const [names, setNames] = useState([
+    {id: '1', name: 'tinith', callerId: '60010939'},
+    {id: '2', name: 'umanda', callerId: '35038007'},
+    {id: '3', name: 'umanda', callerId: '33808859'},
+
+  ]);
+  const [firebaseUserConfig, setfirebaseUserConfig] = useState(null);
+  const [isCalling, setisCalling] = useState(false);
+
+ const [video , setVideo] = useState({})
+
+  const [APN, setAPN] = useState(null);
+
+  const APNRef = useRef();
+
+  APNRef.current = APN;
+
+  const [callee, setCallee] = useState('');
+  const voximplant = Voximplant.getInstance();
+
   const [userInfo, setUserInfo] = useState({});
 
   const clientCheck = async () => {
@@ -53,80 +72,17 @@ export default function Home({navigation}) {
   useEffect(() => {
     clientCheck();
   }, []);
+  // useEffect(
+  //   () =>
+  //     navigation.addListener('beforeRemove', (e) => {
+  //       e.preventDefault();
 
-  function showLoginError(message) {
-    Alert.alert('Login error', message, [
-      {
-        text: 'OK',
-      },
-    ]);
-  }
-
-  // useEffect(() => {
-  //   async function login() {
-  //     const loginData = await useLoginstatus();
-
-  //     // PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
-  //     if (loginData?.user) {
-  //       try {
-  //         let clientState = await voximplant.getClientState();
-  //         if (clientState === Voximplant.ClientState.DISCONNECTED) {
-  //           await voximplant.connect();
-  //           await voximplant.login(
-  //             `${loginData.user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
-  //             loginData.password,
-  //           );
-  //         }
-  //         if (clientState === Voximplant.ClientState.CONNECTED) {
-  //           await voximplant.login(
-  //             `${loginData.user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
-  //             loginData.password,
-  //           );
-  //         }
-  //       } catch (e) {
-  //         let message;
-  //         switch (e.name) {
-  //           case Voximplant.ClientEvents.ConnectionFailed:
-  //             message = 'Connection error, check your internet connection';
-  //             break;
-  //           case Voximplant.ClientEvents.AuthResult:
-  //             message = convertCodeMessage(e.code);
-  //             break;
-  //           default:
-  //             message = 'Unknown error. Try again';
-  //         }
-  //         showLoginError(message);
-  //       }
-  //     }
-  //   }
-
-  //   login();
-  // }, []);
-
-  const [number, setNumber] = useState('');
-  const [names, setNames] = useState([
-    {id: '1', name: 'tinith', callerId: 'tinith'},
-    {id: '2', name: 'umanda', callerId: 'umanda'},
-    {id: '3', name: 'Charlie'},
-    {id: '4', name: 'David'},
-    {id: '5', name: 'Eve'},
-  ]);
-  const [firebaseUserConfig, setfirebaseUserConfig] = useState(null);
-  const [isCalling, setisCalling] = useState(false);
-
-  const [APN, setAPN] = useState(null);
-
-  const APNRef = useRef();
-
-  APNRef.current = APN;
-
-  const [callee, setCallee] = useState('');
-  const voximplant = Voximplant.getInstance();
+  //     }),
+  //   []
+  // );
 
   useEffect(() => {
-    console.log('he ');
     async function getFCMtoken() {
-      console.log('ya ');
       const authStatus = await messaging().requestPermission();
       const enabled =
         authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
@@ -148,15 +104,13 @@ export default function Home({navigation}) {
               token,
               platform,
               APN,
+              // claller: 'caller buwa'
             });
           }
           return doc;
         });
 
-        console.log('out');
-        console.log(uids);
         if (uids && uids.length == 0) {
-          console.log('in');
           addUser({token});
         } else {
           console.log('Token Found');
@@ -171,8 +125,11 @@ export default function Home({navigation}) {
   useEffect(() => {
     voximplant.on(Voximplant.ClientEvents.IncomingCall, incomingCallEvent => {
       calls.set(incomingCallEvent.call.callId, incomingCallEvent.call);
+      console.log('video')
+      console.log(video)
       navigation.navigate(SCREEN_NAMES.InCall, {
         callId: incomingCallEvent.call.callId,
+        callType: video.callType
       });
     });
     return function cleanup() {
@@ -207,6 +164,7 @@ export default function Home({navigation}) {
         }
       }
 
+   
       navigation.navigate(SCREEN_NAMES.Call, {
         isVideoCall: isVideoCall,
         callee: name,
@@ -223,7 +181,7 @@ export default function Home({navigation}) {
   useEffect(() => {
     const unsubscribe = messaging().onMessage(remoteMessage => {
       const {callerInfo, type} = JSON.parse(remoteMessage.data.info);
-      console.log(callerInfo);
+      setVideo(callerInfo)
       switch (type) {
         case 'CALL_INITIATED':
           const incomingCallAnswer = ({callUUID}) => {
@@ -247,7 +205,8 @@ export default function Home({navigation}) {
         case 'ACCEPTED':
           setisCalling(false);
           // navigation.navigate(SCREEN_NAMES.Test);
-          makeCall({isVideoCall: true, name: callerInfo.name});
+         
+          makeCall({isVideoCall: callerInfo.callType, name:callerInfo.name, });
           break;
         case 'REJECTED':
           console.log('Call Rejected');
@@ -318,42 +277,23 @@ export default function Home({navigation}) {
     };
   }, []);
 
-  const addUser = async ({token}) => {
+  const addUser = ({token}) => {
     const platform = Platform.OS === 'android' ? 'ANDROID' : 'iOS';
-    const loginData = await useLoginstatus();
-    console.log('loginData');
-    console.log(loginData);
-    if (loginData) {
-      const querySnapshot = await firestore()
-        .collection('users')
-        .where('user', '==', loginData.user)
-        .get();
-
-      const data = querySnapshot.docs.map(doc => doc?.data());
-      console.log(data);
-      if (data && data.length > 0) {
-        querySnapshot.forEach(async doc => {
-          await doc.ref.update({token: token});
-        });
-      } else {
-        const obj = {
-          callerId: loginData.user,
-          token,
-          platform,
-        };
-        if (platform == 'iOS') {
-          obj.APN = APNRef.current;
-        }
-
-        await firestore()
-          .collection('users')
-          .add(obj)
-          .then(() => {
-            setfirebaseUserConfig(obj);
-            console.log('User added!');
-          });
-      }
+    const obj = {
+      callerId: Math.floor(10000000 + Math.random() * 90000000).toString(),
+      token,
+      platform,
+    };
+    if (platform == 'iOS') {
+      obj.APN = APNRef.current;
     }
+    firestore()
+      .collection('users')
+      .add(obj)
+      .then(() => {
+        setfirebaseUserConfig(obj);
+        console.log('User added!');
+      });
   };
 
   const getCallee = async num => {
@@ -372,6 +312,7 @@ export default function Home({navigation}) {
     navigation.navigate(SCREEN_NAMES.Login);
     console.log('logged out');
   };
+
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
@@ -386,19 +327,51 @@ export default function Home({navigation}) {
                   if (data.length === 0) {
                     console.log('CallerId Does not Match');
                   } else {
-                    console.log('CallerId Match!');
                     const {token, platform, APN} = data[0]?.data();
-                    initiateCall({
-                      callerInfo: {
-                        name: name.name,
-                        ...firebaseUserConfig,
+                    Alert.alert('', 'Pick Call Type', [
+                      { text: "Cancel Call", style: 'cancel', onPress: () => {} },
+                      {
+                        text: "Video Call",
+                        style: 'destructive',
+                        onPress: () => {
+                          initiateCall({
+                            callerInfo: {
+                              name: name.name,
+                              callType: true,
+                             
+                              ...firebaseUserConfig,
+                            },
+                            calleeInfo: {
+                              token,
+                              platform,
+                              APN,
+                            },
+                          });
+                        },
                       },
-                      calleeInfo: {
-                        token,
-                        platform,
-                        APN,
+                      {
+                        text: 'Voice Call',
+                        style: 'destructive',
+                        // If the user confirmed, then we dispatch the action we blocked earlier
+                        // This will continue the action that had triggered the removal of the screen
+                        onPress: () => {
+                          // setVideo(false)
+                          initiateCall({
+                            callerInfo: {
+                              name: name.name,
+                              callType: false,
+                              ...firebaseUserConfig,
+                            },
+                            calleeInfo: {
+                              token,
+                              platform,
+                              APN,
+                            },
+                          });
+                        },
                       },
-                    });
+                    ]);
+
                     setisCalling(true);
                   }
                 }

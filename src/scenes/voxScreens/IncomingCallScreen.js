@@ -17,7 +17,7 @@ import {Voximplant} from 'react-native-voximplant';
 const IncomingCallScreen = ({route}) => {
   const navigation = useNavigation();
   console.log(route.params)
-  const {callId} = route.params;
+  const {callId,callType} = route.params;
   const [caller, setCaller] = useState('Unknown');
   // useEffect(
   //   () =>
@@ -40,8 +40,9 @@ const IncomingCallScreen = ({route}) => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [callId]);
+
   useEffect(() => {
-    answerCall(true)
+    answerCall(callType)
   }, []);
 
   async function answerCall(isVideoCall) {

@@ -23,15 +23,7 @@ const CallScreen = ({route}) => {
   const [remoteVideoStreamId, setRemoteVideoStreamId] = useState('');
   const voximplant = Voximplant.getInstance();
 
-  // useEffect(() => {
-  //   // Add the 'beforeRemove' event listener
-  //   const unsubscribe = navigation.addListener('beforeRemove', (e) => {
-  //     e.preventDefault();
-  //   });
-  
-  //   // Cleanup the event listener on unmount
-  //   return unsubscribe;
-  // }, []);
+
 
   useEffect(() => {
     // Voximplant.Hardware.AudioDeviceManager.setUseLoudspeaker(true);
@@ -143,7 +135,9 @@ Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
     <>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safearea}>
-        <View style={styles.videoPanel}>
+        <>
+        {isVideoCall && (
+ <View style={styles.videoPanel}>
           <Voximplant.VideoView
             style={styles.remotevideo}
             videoStreamId={remoteVideoStreamId}
@@ -156,6 +150,9 @@ Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
             showOnTop={true}
           />
         </View>
+        )}
+        </>
+       
         
           <Text style={styles.callConnectingLabel}>{callState}</Text>
           <TouchableOpacity onPress={() => endCall()} style={styles.button}>

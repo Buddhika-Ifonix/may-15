@@ -11,7 +11,7 @@ export const loginData = async (data) => {
   const jsonValue = JSON.stringify(data)
   await AsyncStorage.setItem('loginData', jsonValue)
 
-  return data;
+
 };
 
 
