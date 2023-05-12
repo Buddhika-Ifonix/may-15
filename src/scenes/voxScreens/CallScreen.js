@@ -55,6 +55,10 @@ const CallScreen = ({route}) => {
 
     function subscribeToCallEvents() {
       call.on(Voximplant.CallEvents.Connected, (callEvent) => {
+        if(isVideoCall){
+          testtest();
+        }
+        
         setCallState('Call connected');
       });
       call.on(Voximplant.CallEvents.Disconnected, (callEvent) => {
@@ -92,7 +96,7 @@ const CallScreen = ({route}) => {
           text: 'OK',
           onPress: () => {
             calls.delete(callId.current);
-            navigation.navigate('Main');
+            navigation.navigate(SCREEN_NAMES.Home);
           },
         },
       ]);
@@ -115,10 +119,15 @@ const CallScreen = ({route}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideoCall]);
 
+  // useEffect(() => {
+    
+  // }, []);
+
   const endCall = useCallback(() => {
     let call = calls.get(callId.current);
     call.hangup();
   }, []);
+
 
 
 const testtest = async() => {
@@ -136,7 +145,7 @@ Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safearea}>
         <>
-        {isVideoCall && (
+        
  <View style={styles.videoPanel}>
           <Voximplant.VideoView
             style={styles.remotevideo}
@@ -150,7 +159,7 @@ Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
             showOnTop={true}
           />
         </View>
-        )}
+       
         </>
        
         

@@ -33,13 +33,18 @@ import calls from '../voxScreens/Store';
 import {Voximplant} from 'react-native-voximplant';
 import useLogout from '../../hooks/useLogout';
 import useLoginstatus from '../../hooks/useLoginstatus';
+import {VOXIMPLANT_ACCOUNT, VOXIMPLANT_APP} from '../voxScreens/Constants';
+
 
 export default function Home({navigation}) {
   const [number, setNumber] = useState('');
   const [names, setNames] = useState([
-    {id: '1', name: 'tinith', callerId: '60010939'},
-    {id: '2', name: 'umanda', callerId: '35038007'},
-    {id: '3', name: 'umanda', callerId: '33808859'},
+    {id: '1', name: 'tinith', callerId: '34437659'},
+    {id: '2', name: 'umanda', callerId: '68852771'},
+    {id: '3', name: 'promo', callerId: '47780587'},
+    {id: '4', name: 'tharaka', callerId: '47697337'},
+    {id: '5', name: 'dinusha', callerId: '37109510'},
+
 
   ]);
   const [firebaseUserConfig, setfirebaseUserConfig] = useState(null);
@@ -62,16 +67,28 @@ export default function Home({navigation}) {
     const loginData = await useLoginstatus();
     const state = await voximplant.getClientState();
 
+
     if (loginData) {
-      console.log('');
+      const temPusers = names.filter(name => name.name != loginData.user)
+      
+   setNames(temPusers);
     } else {
       navigation.navigate(SCREEN_NAMES.Login);
     }
+   
   };
-
   useEffect(() => {
-    clientCheck();
+    const unsubscribe = navigation.addListener('focus', () => {
+      console.log(names)
+      clientCheck();
+    });
+
+    return unsubscribe;
   }, []);
+
+
+
+  
   // useEffect(
   //   () =>
   //     navigation.addListener('beforeRemove', (e) => {
@@ -80,6 +97,54 @@ export default function Home({navigation}) {
   //     }),
   //   []
   // );
+  function showLoginError(message) {
+    Alert.alert('Login error', message, [
+      {
+        text: 'OK',
+      },
+    ]);
+  }
+
+  useEffect(() => {
+    async function login() {
+      const loginData = await useLoginstatus();
+
+      // PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+      if (loginData?.user) {
+        try {
+          let clientState = await voximplant.getClientState();
+          if (clientState === Voximplant.ClientState.DISCONNECTED) {
+            await voximplant.connect();
+            await voximplant.login(
+              `${loginData.user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
+              loginData.password,
+            );
+          }
+          if (clientState === Voximplant.ClientState.CONNECTED) {
+            await voximplant.login(
+              `${loginData.user}@${VOXIMPLANT_APP}.${VOXIMPLANT_ACCOUNT}.voximplant.com`,
+              loginData.password,
+            );
+          }
+        } catch (e) {
+          let message;
+          switch (e.name) {
+            case Voximplant.ClientEvents.ConnectionFailed:
+              message = 'Connection error, check your internet connection';
+              break;
+            case Voximplant.ClientEvents.AuthResult:
+              message = convertCodeMessage(e.code);
+              break;
+            default:
+              message = 'Unknown error. Try again';
+          }
+          showLoginError(message);
+        }
+      }
+    }
+
+    login();
+  }, []);
 
   useEffect(() => {
     async function getFCMtoken() {
@@ -125,12 +190,17 @@ export default function Home({navigation}) {
   useEffect(() => {
     voximplant.on(Voximplant.ClientEvents.IncomingCall, incomingCallEvent => {
       calls.set(incomingCallEvent.call.callId, incomingCallEvent.call);
-      console.log('video')
-      console.log(video)
+     setTimeout(() => {
       navigation.navigate(SCREEN_NAMES.InCall, {
         callId: incomingCallEvent.call.callId,
         callType: video.callType
       });
+     }, );
+    //  navigation.navigate(SCREEN_NAMES.InCall, {
+    //     callId: incomingCallEvent.call.callId,
+    //     callType: video.callType
+    //   });
+      
     });
     return function cleanup() {
       voximplant.off(Voximplant.ClientEvents.IncomingCall);
@@ -181,6 +251,7 @@ export default function Home({navigation}) {
   useEffect(() => {
     const unsubscribe = messaging().onMessage(remoteMessage => {
       const {callerInfo, type} = JSON.parse(remoteMessage.data.info);
+      console.log(callerInfo)
       setVideo(callerInfo)
       switch (type) {
         case 'CALL_INITIATED':
@@ -314,7 +385,7 @@ export default function Home({navigation}) {
   };
 
   return (
-    <View style={styles.container}>
+    <>{!isCalling ? ( <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         {names.map(name => (
           <TouchableOpacity
@@ -329,11 +400,12 @@ export default function Home({navigation}) {
                   } else {
                     const {token, platform, APN} = data[0]?.data();
                     Alert.alert('', 'Pick Call Type', [
-                      { text: "Cancel Call", style: 'cancel', onPress: () => {} },
+                      { text: "Cancel Call", style: 'cancel', onPress: () => {}},
                       {
                         text: "Video Call",
                         style: 'destructive',
                         onPress: () => {
+                          setisCalling(true);
                           initiateCall({
                             callerInfo: {
                               name: name.name,
@@ -355,6 +427,7 @@ export default function Home({navigation}) {
                         // If the user confirmed, then we dispatch the action we blocked earlier
                         // This will continue the action that had triggered the removal of the screen
                         onPress: () => {
+                          setisCalling(true);
                           // setVideo(false)
                           initiateCall({
                             callerInfo: {
@@ -369,10 +442,11 @@ export default function Home({navigation}) {
                             },
                           });
                         },
+                        
                       },
                     ]);
 
-                    setisCalling(true);
+                    
                   }
                 }
               } else {
@@ -386,7 +460,72 @@ export default function Home({navigation}) {
       <TouchableOpacity onPress={logoutHandler}>
         <Text style={styles.contactName}>LogOut</Text>
       </TouchableOpacity>
+    </View>):(
+      <View style={{ flex: 1, justifyContent: "space-around" }}>
+      <View
+        style={{
+          padding: 35,
+          justifyContent: "center",
+          alignItems: "center",
+          borderRadius: 14,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 16,
+            color: "#D0D4DD",
+            fontFamily: ROBOTO_FONTS.Roboto,
+          }}
+        >
+          Calling ...
+        </Text>
+
+        <Text
+          style={{
+            fontSize: 36,
+            marginTop: 12,
+            color: "#ffff",
+            letterSpacing: 8,
+            fontFamily: ROBOTO_FONTS.Roboto,
+          }}
+        >
+          {number}
+        </Text>
+      </View>
+      <View
+        style={{
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <TouchableOpacity
+          onPress={async () => {
+            const data = await getCallee(number);
+            if (data) {
+              updateCallStatus({
+                callerInfo: data[0]?.data(),
+                type: "DISCONNECT",
+              });
+              setisCalling(false);
+            }
+          }}
+          style={{
+            backgroundColor: "#FF5D5D",
+            borderRadius: 30,
+            height: 60,
+            aspectRatio: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <CallEnd width={50} height={12} />
+        </TouchableOpacity>
+      </View>
     </View>
+    )}
+    
+    </>
+   
   );
 }
 const styles = StyleSheet.create({
