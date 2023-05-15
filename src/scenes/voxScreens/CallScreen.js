@@ -1,4 +1,4 @@
-import {useNavigation,} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import React, {useState, useRef, useCallback, useEffect} from 'react';
 import {
   Alert,
@@ -11,7 +11,7 @@ import {
 import styles from './Styles';
 import {Voximplant} from 'react-native-voximplant';
 import calls from './Store';
-import { SCREEN_NAMES } from '../../navigators/screenNames';
+import {SCREEN_NAMES} from '../../navigators/screenNames';
 
 const CallScreen = ({route}) => {
   const navigation = useNavigation();
@@ -21,9 +21,18 @@ const CallScreen = ({route}) => {
   const callId = useRef(route.params.callId);
   const [localVideoStreamId, setLocalVideoStreamId] = useState('');
   const [remoteVideoStreamId, setRemoteVideoStreamId] = useState('');
+  const [accBalance, setAccBalance] = useState(20000);
   const voximplant = Voximplant.getInstance();
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      let call = calls.get(callId.current);
+      call.hangup();
+      Alert.alert('Call ended due to insufficient balance')
+    }, accBalance);
 
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Voximplant.Hardware.AudioDeviceManager.setUseLoudspeaker(true);
@@ -31,9 +40,9 @@ const CallScreen = ({route}) => {
       video: {
         sendVideo: isVideoCall,
         receiveVideo: isVideoCall,
-        // useSpeaker: true 
+        // useSpeaker: true
       },
-      useSpeaker: true 
+      useSpeaker: true,
     };
 
     let call;
@@ -54,27 +63,27 @@ const CallScreen = ({route}) => {
     }
 
     function subscribeToCallEvents() {
-      call.on(Voximplant.CallEvents.Connected, (callEvent) => {
-        if(isVideoCall){
+      call.on(Voximplant.CallEvents.Connected, callEvent => {
+        if (isVideoCall) {
           testtest();
         }
-        
+
         setCallState('Call connected');
       });
-      call.on(Voximplant.CallEvents.Disconnected, (callEvent) => {
+      call.on(Voximplant.CallEvents.Disconnected, callEvent => {
         calls.delete(callEvent.call.callId);
         navigation.navigate(SCREEN_NAMES.Home);
       });
-      call.on(Voximplant.CallEvents.Failed, (callEvent) => {
+      call.on(Voximplant.CallEvents.Failed, callEvent => {
         showCallError(callEvent.reason);
       });
-      call.on(Voximplant.CallEvents.ProgressToneStart, (callEvent) => {
+      call.on(Voximplant.CallEvents.ProgressToneStart, callEvent => {
         setCallState('Ringing...');
       });
-      call.on(Voximplant.CallEvents.LocalVideoStreamAdded, (callEvent) => {
+      call.on(Voximplant.CallEvents.LocalVideoStreamAdded, callEvent => {
         setLocalVideoStreamId(callEvent.videoStream.id);
       });
-      call.on(Voximplant.CallEvents.EndpointAdded, (callEvent) => {
+      call.on(Voximplant.CallEvents.EndpointAdded, callEvent => {
         console.log('endpoint added');
         endpoint = callEvent.endpoint;
         subscribeToEndpointEvents();
@@ -84,7 +93,7 @@ const CallScreen = ({route}) => {
     function subscribeToEndpointEvents() {
       endpoint.on(
         Voximplant.EndpointEvents.RemoteVideoStreamAdded,
-        (endpointEvent) => {
+        endpointEvent => {
           setRemoteVideoStreamId(endpointEvent.videoStream.id);
         },
       );
@@ -120,7 +129,7 @@ const CallScreen = ({route}) => {
   }, [isVideoCall]);
 
   // useEffect(() => {
-    
+
   // }, []);
 
   const endCall = useCallback(() => {
@@ -128,49 +137,42 @@ const CallScreen = ({route}) => {
     call.hangup();
   }, []);
 
-
-
-const testtest = async() => {
-  let devices =
-  await Voximplant.Hardware.AudioDeviceManager.getInstance().getAudioDevices();
-  console.log(devices)
-Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
-  devices[1],
-);
-
-}
+  const testtest = async () => {
+    let devices =
+      await Voximplant.Hardware.AudioDeviceManager.getInstance().getAudioDevices();
+    console.log(devices);
+    Voximplant.Hardware.AudioDeviceManager.getInstance().selectAudioDevice(
+      devices[1],
+    );
+  };
 
   return (
     <>
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safearea}>
         <>
-        
- <View style={styles.videoPanel}>
-          <Voximplant.VideoView
-            style={styles.remotevideo}
-            videoStreamId={remoteVideoStreamId}
-            scaleType={Voximplant.RenderScaleType.SCALE_FIT}
-          />
-          <Voximplant.VideoView
-            style={styles.selfview}
-            videoStreamId={localVideoStreamId}
-            scaleType={Voximplant.RenderScaleType.SCALE_FIT}
-            showOnTop={true}
-          />
-        </View>
-       
+          <View style={styles.videoPanel}>
+            <Voximplant.VideoView
+              style={styles.remotevideo}
+              videoStreamId={remoteVideoStreamId}
+              scaleType={Voximplant.RenderScaleType.SCALE_FIT}
+            />
+            <Voximplant.VideoView
+              style={styles.selfview}
+              videoStreamId={localVideoStreamId}
+              scaleType={Voximplant.RenderScaleType.SCALE_FIT}
+              showOnTop={true}
+            />
+          </View>
         </>
-       
-        
-          <Text style={styles.callConnectingLabel}>{callState}</Text>
-          <TouchableOpacity onPress={() => endCall()} style={styles.button}>
-            <Text style={styles.textButton}>END CALL</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => testtest()}  style={styles.button}>
-            <Text style={styles.textButton}>speaker</Text>
-          </TouchableOpacity>
-      
+
+        <Text style={styles.callConnectingLabel}>{callState}</Text>
+        <TouchableOpacity onPress={() => endCall()} style={styles.button}>
+          <Text style={styles.textButton}>END CALL</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => testtest()} style={styles.button}>
+          <Text style={styles.textButton}>speaker</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </>
   );

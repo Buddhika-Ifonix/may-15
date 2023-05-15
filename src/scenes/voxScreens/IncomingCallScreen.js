@@ -42,7 +42,7 @@ const IncomingCallScreen = ({route}) => {
   }, [callId]);
 
   useEffect(() => {
-    answerCall(callType)
+    answerCall(true)
   }, []);
 
   async function answerCall(isVideoCall) {

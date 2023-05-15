@@ -39,11 +39,11 @@ import {VOXIMPLANT_ACCOUNT, VOXIMPLANT_APP} from '../voxScreens/Constants';
 export default function Home({navigation}) {
   const [number, setNumber] = useState('');
   const [names, setNames] = useState([
-    {id: '1', name: 'tinith', callerId: '34437659'},
-    {id: '2', name: 'umanda', callerId: '68852771'},
-    {id: '3', name: 'promo', callerId: '47780587'},
-    {id: '4', name: 'tharaka', callerId: '47697337'},
-    {id: '5', name: 'dinusha', callerId: '37109510'},
+    {id: '1', name: 'tinith', callerId: 'tinith'},
+    {id: '2', name: 'umanda', callerId: 'umanda'},
+    {id: '3', name: 'promo', callerId: 'promo '},
+    {id: '4', name: 'tharaka', callerId: 'tharaka'},
+    {id: '5', name: 'dinusha', callerId: 'dinusha'},
 
 
   ]);
@@ -80,6 +80,7 @@ export default function Home({navigation}) {
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
       console.log(names)
+      clientCheck();
       clientCheck();
     });
 
@@ -190,12 +191,25 @@ export default function Home({navigation}) {
   useEffect(() => {
     voximplant.on(Voximplant.ClientEvents.IncomingCall, incomingCallEvent => {
       calls.set(incomingCallEvent.call.callId, incomingCallEvent.call);
-     setTimeout(() => {
-      navigation.navigate(SCREEN_NAMES.InCall, {
-        callId: incomingCallEvent.call.callId,
-        callType: video.callType
-      });
-     }, );
+      if(video.callType){
+        setTimeout(() => {
+          console.log(video)
+          navigation.navigate(SCREEN_NAMES.InCall, {
+            callId: incomingCallEvent.call.callId,
+            callType: true
+          });
+         }, );
+      }else{
+        setTimeout(() => {
+          console.log(video)
+          navigation.navigate(SCREEN_NAMES.InCall, {
+            callId: incomingCallEvent.call.callId,
+            callType: false
+          });
+         }, );
+      }
+      
+
     //  navigation.navigate(SCREEN_NAMES.InCall, {
     //     callId: incomingCallEvent.call.callId,
     //     callType: video.callType
@@ -348,29 +362,47 @@ export default function Home({navigation}) {
     };
   }, []);
 
-  const addUser = ({token}) => {
+   const addUser = async ({token}) => {
     const platform = Platform.OS === 'android' ? 'ANDROID' : 'iOS';
-    const obj = {
-      callerId: Math.floor(10000000 + Math.random() * 90000000).toString(),
-      token,
-      platform,
-    };
-    if (platform == 'iOS') {
-      obj.APN = APNRef.current;
+    const loginData = await useLoginstatus();
+   
+    if (loginData) {
+      const querySnapshot = await firestore()
+        .collection('users')
+        .where('user', '==', loginData.user)
+        .get();
+
+      const data = querySnapshot.docs.map(doc => doc?.data());
+      console.log(data);
+      if (data && data.length > 0) {
+        querySnapshot.forEach(async doc => {
+          await doc.ref.update({token: token});
+        });
+      } else {
+        const obj = {
+          callerId: loginData.user,
+          token,
+          platform,
+        };
+        if (platform == 'iOS') {
+          obj.APN = APNRef.current;
+        }
+
+        await firestore()
+          .collection('users')
+          .add(obj)
+          .then(() => {
+            setfirebaseUserConfig(obj);
+            console.log('User added!');
+          });
+      }
     }
-    firestore()
-      .collection('users')
-      .add(obj)
-      .then(() => {
-        setfirebaseUserConfig(obj);
-        console.log('User added!');
-      });
   };
 
   const getCallee = async num => {
     const querySnapshot = await firestore()
       .collection('users')
-      .where('callerId', '==', num.toString())
+      .where('callerId', '==', num)
       .get();
     return querySnapshot.docs.map(doc => {
       return doc;
